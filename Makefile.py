@@ -4,6 +4,7 @@ import subprocess
 import monitor
 import time
 import shutil
+import platform
 
 
 TARGET = "main"
@@ -11,7 +12,7 @@ CXX = 'g++'
 
 include_folder = "include"
 src_folder = "src"
-targer_folder = "target"
+target_folder = "target"
 build_folder = "build"
 
 makefile_path = os.path.dirname(os.path.abspath(__file__))
@@ -84,7 +85,7 @@ def init():
             pass
     with open(mode="w", file=os.path.join(project_path, 'src', 'main.cpp')) as f:
         f.write(
-'''#include <iostream> 
+'''#include <iostream>
 using namespace std;
 
 int main()
@@ -103,10 +104,17 @@ def restore():
             pass
 
 def run():
-    resp = subprocess.Popen(os.path.join(project_path, targer_folder, TARGET), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    to_target_path = os.path.join(project_path, target_folder, TARGET)
+    system_type = platform.system()
+    if system_type == 'Linux':
+        to_target_path = "/".join(['"' + path + '"' for path in to_target_path.split('/')])
+
+    resp = subprocess.Popen(to_target_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = resp.communicate()
-    print(out.decode('gbk'))
-    print(err.decode('gbk'))
+    if len(out) != 0:
+        print(out.decode('gbk'))
+    if len(err) != 0:
+        print(err.decode('gbk'))
     
 
 if len(operation) == 0:

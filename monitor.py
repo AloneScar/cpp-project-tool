@@ -45,12 +45,8 @@ def get_files_info(folder_path):
             ))
     return files_info
 
-def comparison_files_info(current_files_info, cur, conn):
+def monitor_files(pervious_files_info, current_files_info, cur, conn):
     current_paths = [path[0] for path in current_files_info]
-
-    cur.execute("select path, timestamp from files_info")
-
-    pervious_files_info = cur.fetchall()
     pervious_paths = [path[0] for path in pervious_files_info]
     pervious_timestamps = [timestamp[1] for timestamp in pervious_files_info]
 
@@ -84,6 +80,19 @@ def comparison_files_info(current_files_info, cur, conn):
     
     return (added_files_info, deleted_paths, changed_files_info)
 
+def monitor_global(current_files_info, cur, conn):
+    cur.execute("select path, timestamp from files_info")
+    pervious_files_info = cur.fetchall()
+    return monitor_files(pervious_files_info, current_files_info, cur, conn)
+
+def monitor_folder(current_files_info, cur, conn) -> str:
+    for file_info in current_files_info:
+        cur.execute('select path, timestamp from files_info where path="%s"' % file_info[0])
+
+    pervious_files_info = cur.fetchall()    
+    return monitor_files(pervious_files_info, current_files_info, cur, conn)
+
+
 def updated_database(added_files_info, deleted_paths, changed_files_info, cur, conn):
     cur.executemany('insert into files_info (path, timestamp) values (?, ?)', added_files_info)
     for path in deleted_paths:
@@ -91,6 +100,7 @@ def updated_database(added_files_info, deleted_paths, changed_files_info, cur, c
     for change_file_info in changed_files_info:
         cur.execute('update files_info set timestamp ="{}" where path="{}"'.format(change_file_info[1], change_file_info[0]))
     conn.commit()
+
 
 def main():
     for folder_path in load_settings_file()['monitor_folders']:

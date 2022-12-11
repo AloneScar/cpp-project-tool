@@ -37,7 +37,7 @@ operation = sys.argv[1:]
 if len(header_changed_files) != 0:
     src_changed_files = src_files
 for file_name in src_changed_files:
-    form_build_file = "{} {} -c {} -o {} -I {}"
+    form_build_file = '{} {} -c "{}" -o "{}" -I {}'
     obj_name = file_name.replace(".cpp", ".o").replace(".c", ".o")
     print(form_build_file.format(CXX, CXXFLAGS, os.path.join(src_folder, file_name), os.path.join(build_folder, obj_name), include_folder))
     resp = subprocess.Popen(form_build_file.format(CXX, CXXFLAGS, os.path.join(project_path, src_folder, file_name), os.path.join(project_path, build_folder, obj_name), os.path.join(project_path, include_folder)), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -41,7 +41,7 @@ def get_files_info(folder_path):
             file_path = os.path.join(curDir, file)
             files_info.append((
                 file_path,
-                str(os.stat(file_path).st_mtime).split('.')[0],
+                str(os.path.getmtime(file_path)).split('.')[0],
             ))
     return files_info
 
@@ -70,21 +70,26 @@ def comparison_files_info(current_files_info, cur, conn):
         if file_info[0] not in pervious_paths:
             added_files_info.append(file_info)
             continue
+
         if file_info[0] not in current_paths:
             deleted_paths.append(file_info[0])
             continue
+
         pervious_index = pervious_paths.index(file_info[0])
+
         if file_info[1] != pervious_timestamps[pervious_index]:
-            changed_files_info.append(pervious_files_info[pervious_index])
+            changed_files_info.append(file_info)
     
-    updated_database(added_files_info, deleted_paths, cur, conn)
+    updated_database(added_files_info, deleted_paths, changed_files_info, cur, conn)
     
     return (added_files_info, deleted_paths, changed_files_info)
 
-def updated_database(added_files_info, deleted_paths, cur, conn):
+def updated_database(added_files_info, deleted_paths, changed_files_info, cur, conn):
     cur.executemany('insert into files_info (path, timestamp) values (?, ?)', added_files_info)
     for path in deleted_paths:
         cur.execute('delete from files_info where path="%s"' % path)
+    for change_file_info in changed_files_info:
+        cur.execute('update files_info set timestamp ="{}" where path="{}"'.format(change_file_info[1], change_file_info[0]))
     conn.commit()
 
 def main():
